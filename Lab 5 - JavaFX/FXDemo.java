@@ -1,4 +1,4 @@
-package com.mybank.gui;
+//package com.mybank.gui;
 
 import com.mybank.domain.Bank;
 import com.mybank.domain.CheckingAccount;
@@ -31,6 +31,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import com.mybank.data.DataSource;
+import java.util.Locale;
+import java.io.IOException;
+import com.mybank.domain.Customer;
+import com.mybank.domain.Account;
 
 /**
  *
@@ -51,7 +56,7 @@ public class FXDemo extends Application {
         border.setLeft(addVBox());
         addStackPane(hbox);
 
-        Scene scene = new Scene(border, 300, 250);
+        Scene scene = new Scene(border, 400, 500);
 
         primaryStage.setTitle("MyBank Clients");
         primaryStage.setScene(scene);
@@ -68,7 +73,7 @@ public class FXDemo extends Application {
         title.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         vbox.getChildren().add(title);
 
-        Line separator = new Line(10, 10, 280, 10);
+        Line separator = new Line(10, 10, 380, 10);
         vbox.getChildren().add(separator);
 
         details = new Text("Account:\t\t#0\nAcc Type:\tChecking\nBalance:\t\t$0000");
@@ -96,6 +101,9 @@ public class FXDemo extends Application {
         Button buttonShow = new Button("Show");
         buttonShow.setPrefSize(100, 20);
 
+        Button buttonReport = new Button("Report");
+        buttonReport.setPrefSize(100, 20);
+
         buttonShow.setOnAction(new EventHandler<ActionEvent>() {
 
             @Override
@@ -118,7 +126,43 @@ public class FXDemo extends Application {
             }
         });
 
-        hbox.getChildren().addAll(clients, buttonShow);
+        buttonReport.setOnAction(new EventHandler<ActionEvent>() {
+
+            @Override
+            public void handle(ActionEvent event) {
+                title.setText("CUSTOMERS REPORT");
+                String customers = "";
+                String customerName = "";
+                String account_type = "";
+
+                for (int cust_idx = 0;
+                        cust_idx < Bank.getNumberOfCustomers();
+                        cust_idx++) {
+                    Customer customer = Bank.getCustomer(cust_idx);
+                    customerName = customer.getFirstName() + ", " + customer.getLastName();
+                    // For each account for this customer...
+                    for (int acct_idx = 0;
+                            acct_idx < customer.getNumberOfAccounts();
+                            acct_idx++) {
+                        Account account = customer.getAccount(acct_idx);
+
+                        // Determine the account type
+                        if (account instanceof SavingsAccount) {
+                            account_type = "Savings Account";
+                        } else if (account instanceof CheckingAccount) {
+                            account_type = "Checking Account";
+                        } else {
+                            account_type = "Unknown Account Type";
+                        }
+
+                        customers += customerName + "\nAcc type: " + account_type + "\nBalance: " + account.getBalance() + "$\n\n";
+                    }
+                }
+                details.setText(customers);
+            }
+        });
+
+        hbox.getChildren().addAll(clients, buttonShow, buttonReport);
 
         return hbox;
     }
@@ -153,7 +197,7 @@ public class FXDemo extends Application {
                 ShowAboutInfo();
             }
         });
-        
+
         stack.getChildren().addAll(helpIcon, helpText);
         stack.setAlignment(Pos.CENTER_RIGHT);     // Right-justify nodes in stack
         StackPane.setMargin(helpText, new Insets(0, 10, 0, 0)); // Center "?"
@@ -175,13 +219,13 @@ public class FXDemo extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        Bank.addCustomer("John", "Doe");
-        Bank.getCustomer(0).addAccount(new SavingsAccount(100, 2));
-        Bank.addCustomer("Fox", "Mulder");
-        Bank.getCustomer(1).addAccount(new CheckingAccount(1000, 500));
-        Bank.addCustomer("Dana", "Scully");
-        Bank.getCustomer(2).addAccount(new CheckingAccount(1060));
+        Locale.setDefault(new Locale("en", "us"));
 
+        try {
+            new DataSource("./data/test.dat").loadData();
+        } catch (IOException e) {
+            System.out.println("Помилка завантаження даних");
+        }
         launch(args);
     }
 
